@@ -1,0 +1,74 @@
+version: 2
+
+models:
+  - name: dim_customers # table name
+    description: "Dimension table for Customers" # description of table
+    columns:
+      - name: sk_customer_id # column name
+        description: "Surrogate Key for customer_id" # description of column
+        tests: 
+          - not_null # check not null values
+          - dbt_constraints.primary_key
+
+  - name: dim_dates
+    description: "Dimension table for Dates"
+    columns:
+      - name: date_day
+        description: "Date from Dimension Dates and Primary Key"
+        tests:
+          - not_null
+          - dbt_constraints.primary_key
+    
+  - name: fct_reservations
+    description: "Fact table for Payments and Reservations"
+    columns:
+      - name: sk_reservation_id
+        description: "Surrogate Key for reservation_id"
+        tests:
+          - not_null
+          - dbt_constraints.primary_key
+      - name: sk_customer_id
+        description: "Foreign Key from dim_customers"
+        tests:
+          - not_null
+          - dbt_constraints.foreign_key:
+              pk_table_name: ref('dim_customers')
+              pk_column_name: sk_customer_id
+      - name: reservation_date
+        description: "Foreign Key from dim_dates for reservation_date"
+        tests:
+          - dbt_constraints.foreign_key:
+              pk_table_name: ref('dim_dates')
+              pk_column_name: 'date_day'
+      - name: end_date
+        description: "Foreign Key from dim_dates for end_date"
+        tests:
+          - dbt_constraints.foreign_key:
+              pk_table_name: ref('dim_dates')
+              pk_column_name: 'date_day'
+      - name: payment_date
+        description: "Foreign Key from dim_dates for payment_date"
+        tests:
+          - dbt_constraints.foreign_key:
+              pk_table_name: ref('dim_dates')
+              pk_column_name: 'date_day'
+      - name: expire_date
+        description: "Foreign Key from dim_dates for expire_date"
+        tests:
+          - dbt_constraints.foreign_key:
+              pk_table_name: ref('dim_dates')
+              pk_column_name: 'date_day'
+      - name: rating
+        description: "Rating for each reservations"
+        tests:
+          - not_null
+          - is_rating_less_than_zero
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1
+              max_value: 5
+      - name: payment_status
+        description: "Payment status for each reservations"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Success', 'Waiting', 'Failed']
